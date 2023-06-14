@@ -1,19 +1,28 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post, UsePipes, ValidationPipe, Param } from "@nestjs/common";
 import { CreateUserDto } from "./dtos/createUser.dto";
 import { UserService } from "./user.service";
-import { User } from "./interfaces/user.interface";
+import { UserEntity } from "./entities/user.entity";
+import { ReturnUserDto } from "./dtos/returnUser.dto";
 
 @Controller("user")
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
+  @UsePipes(ValidationPipe)
   @Post()
-  async CrateUser(@Body() createUser: CreateUserDto): Promise<User> {
-    return this.userService.createUser(createUser)
-    
+  async CrateUser(@Body() createUser: CreateUserDto): Promise<ReturnUserDto> {
+    return this.userService.createUser(createUser)    
   }
   @Get()
-  async getAllUsers(): Promise<User[]> {
-    return this.userService.getAllUsers()
+  async getAllUser(): Promise<ReturnUserDto[]> {
+    return (await this.userService.getAllUsers()).map(
+      (userEntity) => new ReturnUserDto(userEntity),
+    );
+  }
+
+  @Get('/:userId')
+  async getUserById(@Param('userId') userId: number): Promise<ReturnUserDto> {
+    return new ReturnUserDto(
+      await this.userService.getUserByIdUsingRelations(userId),
+    );
   }
 }
